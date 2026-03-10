@@ -71,7 +71,7 @@ We install Traefik via Helm. The HTTP port is mapped to **8081** to avoid confli
 
 ```powershell
 # 1. Add Traefik Repo
-helm repo add traefik https://traefik.github.io/charts](https://traefik.github.io/charts
+helm repo add traefik https://traefik.github.io/charts
 helm repo update
 
 # 2. Install Traefik with Dashboard and Metrics enabled
@@ -79,14 +79,14 @@ helm install traefik traefik/traefik `
   --create-namespace `
   --namespace traefik `
   --set ports.web.exposedPort=8081 `
-  --set "additionalArguments={--api.dashboard=true,--api.insecure=true,--metrics.prometheus=true}"
+  --set "additionalArguments={--metrics.prometheus=true,--metrics.prometheus.entryPoint=web,--api.dashboard=true,--api.insecure=true}"
 ```
 
 ---
 
 ## 📦 2. Deploy the Applications
 
-Save the following YAML as `apps.yaml`. This creates two deployments and services: **Stable-V1** and **Experimental-V2**.
+`apps.yaml`: This creates two deployments and services: **Stable-V1** and **Experimental-V2**.
 
 ```yaml
 apiVersion: apps/v1
@@ -161,7 +161,7 @@ kubectl apply -f apps.yaml
 
 ## ⚖️ 3. Configure the 80/20 Traffic Split
 
-Save this as `split-test.yaml`. This uses Traefik's Custom Resource Definitions (`TraefikService` and `IngressRoute`) to route 80% of traffic to V1 and 20% to V2.
+`split-test.yaml`: This uses Traefik's Custom Resource Definitions (`TraefikService` and `IngressRoute`) to route 80% of traffic to V1 and 20% to V2.
 
 ```yaml
 apiVersion: traefik.io/v1alpha1
@@ -204,7 +204,7 @@ kubectl apply -f split-test.yaml
 
 ## 📊 4. Expose the Traefik Dashboard
 
-To view the visual representation of your routing and services, save this as `traefik-dashboard.yaml`:
+`traefik-dashboard.yaml`: To view the visual representation of your routing and services
 
 ```yaml
 apiVersion: traefik.io/v1alpha1
@@ -244,11 +244,23 @@ Verify the exact hit count processed by Traefik:
 curl.exe -s http://localhost:8081/metrics | Select-String "traefik_service_requests_total"
 ```
 
+```console
+# HELP traefik_service_requests_total How many HTTP requests processed on a service, partitioned by status code,
+protocol, and method.
+# TYPE traefik_service_requests_total counter
+traefik_service_requests_total{code="200",method="GET",protocol="http",service="default-app-v1-service-80@kubernetescrd
+"} 16
+traefik_service_requests_total{code="200",method="GET",protocol="http",service="default-app-v2-service-80@kubernetescrd
+"} 4
+```
+
 ### 3. Access the Dashboard
 Open your browser and navigate to:
 http://traefik.localhost:8081/dashboard/ *(Note: The trailing slash is required!)*
 
 Go to **HTTP -> Services -> default-weighted-app-service** to see the visual 80/20 breakdown.
+
+![Screen](./img/screen-service-weight.png)
 
 ---
 
