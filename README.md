@@ -71,7 +71,7 @@ We install Traefik via Helm. The HTTP port is mapped to **8081** to avoid confli
 
 ```powershell
 # 1. Add Traefik Repo
-helm repo add traefik [https://traefik.github.io/charts](https://traefik.github.io/charts)
+helm repo add traefik https://traefik.github.io/charts](https://traefik.github.io/charts
 helm repo update
 
 # 2. Install Traefik with Dashboard and Metrics enabled
