@@ -33,7 +33,7 @@ graph LR
     end
 
     %% Traffic Flow
-    User == "curl http://localhost:8081\nHeader -> Host: split.localhost" ===> EP
+    User == "curl http://localhost:8081 -H 'Host: split.localhost'" ===> EP
     EP --> Router
     Router -- "Matches Rule" --> Splitter
     
