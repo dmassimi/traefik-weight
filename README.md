@@ -5,90 +5,56 @@ This project demonstrates how to set up **Traefik v3** on a local Kubernetes clu
 Perfect for testing Canary deployments or A/B testing locally.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#00ADD8', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#fff'}}}%%
-graph TD
-    %% Define Nodes
-    Client[("💻 Client (Host Machine)<br/>curl Host: split.localhost")]
-    
-    subgraph K8sCluster ["☸️ Kubernetes Cluster (Docker Desktop)"]
-        
-        subgraph TraefikNS ["Namespace: traefik"]
-            T_Svc[("Traefik LoadBalancer Service<br/>Port 8081")]
-            T_Pod[["Traefik Pod v3.0<br/>api.insecure=true<br/>metrics.prometheus=true"]]
+%%{init: {'theme': 'neutral'}}%%
+graph LR
+    %% External
+    User((💻 Client))
+
+    %% Traefik Space
+    subgraph Traefik [Traefik Configuration]
+        direction TB
+        EP[🚪 EntryPoint: 8081]
+        Router{🌐 Router<br>Host: split.localhost}
+        Splitter{⚖️ TraefikService<br>Type: Weighted}
+    end
+
+    %% Kubernetes Space
+    subgraph K8s [Kubernetes Cluster]
+        subgraph V1 [80% Traffic]
+            direction LR
+            Svc1[⚙️ app-v1-service]
+            Pod1([📦 Stable-V1 Pod])
         end
-        
-        subgraph DefaultNS ["Namespace: default"]
-            IR_Split("IngressRoute: split-test-route<br/>Rule: Host(`split.localhost`)")
-            
-            TSvc_Weight("TraefikService: weighted-app-service<br/>Type: Weighted")
-            
-            K8s_Svc1[("K8s Service: app-v1-service<br/>Port 80")]
-            K8s_Svc2[("K8s Service: app-v2-service<br/>Port 80")]
-            
-            Pod_V1{{"Pod: app-v1<br/>--name=Stable-V1"}}
-            Pod_V2{{"Pod: app-v2<br/>--name=Experimental-V2"}}
-        end
-        
-        subgraph Metrics_In_Dashboard ["📊 Traefik Dashboard (Visually)"]
-            Dashboard[("default-weighted-app-service page")]
-            Stat1("app-v1-service<br/>Requests: 16")
-            Stat2("app-v2-service<br/>Requests: 4")
+        subgraph V2 [20% Traffic]
+            direction LR
+            Svc2[⚙️ app-v2-service]
+            Pod2([📦 Experimental-V2 Pod])
         end
     end
 
-    %% Define Connections and Labels
-    Client -->|http://localhost:8081<br/>Host: split.localhost| T_Svc
-    T_Svc --> T_Pod
+    %% Traffic Flow
+    User == "curl http://localhost:8081\nHeader -> Host: split.localhost" ===> EP
+    EP --> Router
+    Router -- "Matches Rule" --> Splitter
     
-    %% Service Discovery
-    T_Pod -.->|Reads CRDs| IR_Split
-    T_Pod -.->|Reads CRDs| TSvc_Weight
+    Splitter == "Weight: 80" ===> Svc1
+    Splitter -. "Weight: 20" .-> Svc2
     
-    %% Traffic Routing
-    T_Pod ==>|Matches Host| IR_Split
-    IR_Split ==> TSvc_Weight
-    
-    %% Weighted Split
-    TSvc_Weight ==>|80% Weight| K8s_Svc1
-    TSvc_Weight ==>|20% Weight| K8s_Svc2
-    
-    %% Pod Selection
-    K8s_Svc1 --> Pod_V1
-    K8s_Svc2 --> Pod_V2
+    Svc1 --> Pod1
+    Svc2 --> Pod2
 
-    %% Metrics Linking
-    Dashboard --- TSvc_Weight
-    Dashboard --> Stat1
-    Dashboard --> Stat2
+    %% Custom CSS Styling
+    classDef client fill:#e0f7fa,stroke:#006064,stroke-width:2px,color:#000;
+    classDef traefik fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#000;
+    classDef service fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#000;
+    classDef stable fill:#dcedc8,stroke:#33691e,stroke-width:2px,color:#000;
+    classDef canary fill:#ffcdd2,stroke:#b71c1c,stroke-width:2px,color:#000;
 
-    %% Styling
-    classDef traefik fill:#00ADD8,stroke:#000,stroke-width:2px,color:#fff;
-    classDef k8s fill:#326CE5,stroke:#000,stroke-width:2px,color:#fff;
-    classDef appV1 fill:#66bb6a,stroke:#000,stroke-width:2px,color:#fff;
-    classDef appV2 fill:#ef5350,stroke:#000,stroke-width:2px,color:#fff;
-    classDef client fill:#f9f9f9,stroke:#333,stroke-width:1px,color:#000;
-    classDef metrics fill:#ffeb3b,stroke:#000,stroke-width:1px,color:#000;
-
-    class T_Pod,T_Svc,IR_Split,TSvc_Weight traefik;
-    class K8s_Svc1,K8s_Svc2 k8s;
-    class Pod_V1 appV1;
-    class Pod_V2 appV2;
-    class Client client;
-    class Dashboard,Stat1,Stat2 metrics;
-
-    %% Add Legend/Key
-    %% (Hackish Mermaid key)
-    subgraph Legend ["Key"]
-        direction LR
-        TraefikKey[[Traefik Component]]
-        K8sKey(K8s Component)
-        App1Key{{V1 Pod}}
-        App2Key{{V2 Pod}}
-    end
-    class TraefikKey traefik;
-    class K8sKey k8s;
-    class App1Key appV1;
-    class App2Key appV2;
+    class User client;
+    class EP,Router,Splitter traefik;
+    class Svc1,Svc2 service;
+    class Pod1 stable;
+    class Pod2 canary;
 ```
 
 ## 🚀 Prerequisites
