@@ -1,0 +1,29 @@
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: weighted-app-service
+  namespace: default
+spec:
+  weighted:
+    services:
+      - name: app-v1-service
+        port: 80
+        weight: 80  # 80% of traffic
+      - name: app-v2-service
+        port: 80
+        weight: 20  # 20% of traffic
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: split-test-route
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+  - match: Host(`split.localhost`)
+    kind: Rule
+    services:
+    - name: weighted-app-service  # Points to the TraefikService above
+      kind: TraefikService
