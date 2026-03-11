@@ -235,7 +235,7 @@ kubectl apply -f traefik-dashboard.yaml
 ### 1. Test the Routing Split
 Run a loop in PowerShell to hit the endpoint 10 times and watch the 80/20 distribution in action:
 ```powershell
-1..10 | ForEach-Object { curl.exe -s -H "Host: split.localhost" http://localhost:8081 }
+1..20 | ForEach-Object { curl.exe -s -H "Host: split.localhost" http://localhost:8081 }
 ```
 
 ### 2. Check Raw Prometheus Metrics
