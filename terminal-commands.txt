@@ -20,10 +20,11 @@ kubectl apply -f split-test.yaml
 # (Ensure you have your traefik-dashboard.yaml file in the current folder)
 kubectl apply -f traefik-dashboard.yaml
 
-# 7. Test the 80/20 split (Run 10 times)
+# 7. Upgrade treafik to enable Prometheus metrics
+helm upgrade traefik traefik/traefik   --namespace traefik   --reuse-values   --set "additionalArguments={--metrics.prometheus=true,--metrics.prometheus.entryPoint=web,--api.dashboard=true,--api.insecure=true}"
+
+# 8. Test the 80/20 split (Run 10 times)
 1..10 | ForEach-Object { curl.exe -s -H "Host: split.localhost" http://localhost:8081 }
 
-
-helm upgrade traefik traefik/traefik   --namespace traefik  --reuse-values  --set "additionalArguments={--api.dashboard=true,--api.insecure=true}"
-helm upgrade traefik traefik/traefik   --namespace traefik   --reuse-values   --set "additionalArguments={--metrics.prometheus=true,--api.dashboard=true,--api.insecure=true}"
+# 8. Port Forward to access to Traefik http page
 kubectl port-forward $(kubectl get pods -n traefik -l app.kubernetes.io/name=traefik -o name) 9000:8080 -n traefik
