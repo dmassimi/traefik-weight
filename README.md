@@ -5,6 +5,17 @@ This project demonstrates how to set up **Traefik v3** on a local Kubernetes clu
 Perfect for testing Canary deployments or A/B testing locally.
 
 ```mermaid
+%%{init: {
+  'theme': 'base', 
+  'look': 'handDrawn', 
+  'themeVariables': { 
+    'fontFamily': 'Comic Sans MS, cursive',
+    'primaryColor': '#ffffff',
+    'mainBkg': '#ffffff',
+    'lineColor': '#444444'
+  }
+}}%%
+
 %%{init: {'theme': 'neutral'}}%%
 graph LR
     %% External
@@ -55,6 +66,7 @@ graph LR
     class Svc1,Svc2 service;
     class Pod1 stable;
     class Pod2 canary;
+
 ```
 
 ## 🚀 Prerequisites
